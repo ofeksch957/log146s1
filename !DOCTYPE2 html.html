@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת אבחון לוגיסטי לגדודים - אוגדה 146</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        idf: {
+                            light: '#4b5320',
+                            DEFAULT: '#3b4315',
+                            dark: '#2a310c',
+                            accent: '#eab308'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .rating-label input:checked + div {
+            background-color: #3b4315;
+            color: white;
+            border-color: #3b4315;
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
+        }
+        .rating-label div {
+            transition: all 0.2s ease;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        .checkbox-label input:checked + div {
+            background-color: #eab308;
+            color: #2a310c;
+            border-color: #eab308;
+            font-weight: bold;
+        }
+        /* מעברי צבע רכים לשגיאות */
+        .error-highlight {
+            transition: all 0.3s ease;
+        }
+        /* עיצוב אחיד לשאלות סנכרון */
+        .sync-block {
+            background-color: #f8fafc;
+            border-right: 4px solid #eab308;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-idf text-white p-6 shadow-lg sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo and Title -->
+            <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto text-center sm:text-right">
+                <img src="logo.png" alt="לוגיסטיקה 146" class="h-20 w-20 object-contain bg-white rounded-full p-1 shadow-md border-2 border-idf-accent" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Zroa_HaYabasha_Logo.svg/512px-Zroa_HaYabasha_Logo.svg.png';">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">מרכז אימונים לוגיסטי - אוגדה 146</h1>
+                    <p class="text-idf-accent text-sm mt-1 font-medium">שאלון הערכת מוכנות וקביעת מודל אימון (Self-Assessment)</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-4 w-full sm:w-auto justify-center sm:justify-end mt-4 sm:mt-0">
+                <button onclick="shareApp(this)" class="flex items-center justify-center gap-2 bg-idf-dark hover:bg-idf-light transition px-4 py-2 rounded text-sm font-bold border border-idf-light w-full sm:w-auto shadow">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    <span>שתף שאלון</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 py-8">
+        
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8 border-t-4 border-idf-accent">
+            <h2 class="text-xl font-bold text-idf mb-2">הוראות למפקד הפלס"ם:</h2>
+            <p class="text-gray-600 mb-2">שאלון זה נועד לאבחן את העומק והכשירות הלוגיסטית של הגדוד על מנת להתאים עבורכם מודל אימון אפקטיבי.</p>
+            <p class="text-gray-600 font-medium">אנא ענה בכנות, ודרג בחלקים המקצועיים בערך שבין 1 (חלש מאוד / לא קיים) ל-5 (מעולה / כשיר מלא).</p>
+        </div>
+
+        <form id="assessmentForm" class="space-y-8" novalidate>
+
+            <!-- Background Info Section -->
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-idf-light text-white px-6 py-4">
+                    <h3 class="text-lg font-bold">חלק מקדים: נתוני רקע</h3>
+                </div>
+                <div class="p-6 space-y-6 bg-slate-50">
+                    
+                    <div class="flex flex-col sm:flex-row gap-6 mb-2">
+                        <div class="flex-1">
+                            <label class="block font-bold mb-3 text-slate-800 text-lg">מספר חטיבה:</label>
+                            <input type="number" name="brigade_number" class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-idf focus:outline-none transition-colors" placeholder="הכנס חטיבה..." required>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block font-bold mb-3 text-slate-800 text-lg">מספר גדוד:</label>
+                            <input type="number" name="battalion_number" class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-idf focus:outline-none transition-colors" placeholder="הכנס גדוד..." required>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-200 pt-6">
+                        <label class="block font-bold mb-3 text-slate-800 text-lg">מתי התקיים אימון פלס"ם מלא או הפעלה מבצעית משמעותית אחרונה?</label>
+                        <select name="last_training" class="w-full sm:w-1/2 p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-idf focus:outline-none transition-colors">
+                            <option value="" disabled selected>בחר/י טווח זמן...</option>
+                            <option value="recent">בחצי השנה האחרונה</option>
+                            <option value="year">בשנה האחרונה</option>
+                            <option value="over_year">לפני למעלה משנה</option>
+                        </select>
+                    </div>
+
+                    <div id="roleChangesContainer" class="border-t border-slate-200 pt-6 transition-colors duration-300">
+                        <label class="block font-bold mb-3 text-slate-800 text-lg">האם התבצעו חילופי בעלי תפקידים בדרג הפיקודי/מקצועי בשנה האחרונה?</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="role_changes" value="yes" class="w-5 h-5 text-idf focus:ring-idf" onclick="document.getElementById('roleChangesArrays').classList.remove('hidden')">
+                                <span class="text-slate-700 text-lg">כן</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="role_changes" value="no" class="w-5 h-5 text-idf focus:ring-idf" onclick="document.getElementById('roleChangesArrays').classList.add('hidden')">
+                                <span class="text-slate-700 text-lg">לא</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Appears only if 'Yes' is selected above -->
+                    <div id="roleChangesArrays" class="hidden bg-white p-4 rounded-lg border border-slate-200 shadow-sm mt-4">
+                        <label class="block font-medium mb-3 text-slate-700">באילו מערכים התבצעו החילופים? (ניתן לסמן מספר אפשרויות)</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            <label class="checkbox-label cursor-pointer text-center">
+                                <input type="checkbox" name="changed_arrays" value="מכלול מנהלה" class="hidden">
+                                <div class="border border-slate-300 rounded-md py-2 px-1 text-sm transition-all">מכלול</div>
+                            </label>
+                            <label class="checkbox-label cursor-pointer text-center">
+                                <input type="checkbox" name="changed_arrays" value="הספקה" class="hidden">
+                                <div class="border border-slate-300 rounded-md py-2 px-1 text-sm transition-all">הספקה</div>
+                            </label>
+                            <label class="checkbox-label cursor-pointer text-center">
+                                <input type="checkbox" name="changed_arrays" value="רפואה" class="hidden">
+                                <div class="border border-slate-300 rounded-md py-2 px-1 text-sm transition-all">רפואה</div>
+                            </label>
+                            <label class="checkbox-label cursor-pointer text-center">
+                                <input type="checkbox" name="changed_arrays" value='משא"ן' class="hidden">
+                                <div class="border border-slate-300 rounded-md py-2 px-1 text-sm transition-all">משא"ן</div>
+                            </label>
+                            <label class="checkbox-label cursor-pointer text-center">
+                                <input type="checkbox" name="changed_arrays" value="רבנות" class="hidden">
+                                <div class="border border-slate-300 rounded-md py-2 px-1 text-sm transition-all">רבנות</div>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Part A -->
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
+                    <h3 class="text-lg font-bold text-slate-800">חלק א': כשירות בסיסית (כ"א וציוד)</h3>
+                </div>
+                <div class="p-6 space-y-8">
+                    <div class="question-block">
+                        <label class="block font-medium text-slate-700"><strong>1. איוש:</strong> רמת איוש בעלי תפקידי הליבה בחירום (מפקדי מחלקות, חובשים, נהגים קריטיים, סמלים).</label>
+                        <div class="scale-container" data-qname="q1"></div>
+                    </div>
+                    <div class="question-block">
+                        <label class="block font-medium text-slate-700"><strong>2. הסמכות וכשירות:</strong> רמת המקצועיות בפועל (תוקף רישיון, הסמכות רפואיות, רענוני מקצוע ושלבים).</label>
+                        <div class="scale-container" data-qname="q2"></div>
+                    </div>
+                    
+                    <!-- שאלה 3 שונתה לכמות רכבים -->
+                    <div class="question-block bg-white p-5 rounded-lg border border-slate-200 shadow-sm" id="vehicleContainer">
+                        <label class="block font-bold text-slate-800 text-lg mb-4">3. רכב - כמות רכבים לתרגיל:</label>
+                        <div class="flex flex-col sm:flex-row gap-6">
+                            <div class="flex-1">
+                                <label class="block font-medium text-slate-700 mb-2">רכבי משא כבד</label>
+                                <select name="heavy_trucks" class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-idf focus:outline-none transition-colors">
+                                    <option value="" disabled selected>בחר כמות (1-7)...</option>
+                                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+                                </select>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block font-medium text-slate-700 mb-2">רכבי משא</label>
+                                <select name="light_trucks" class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-idf focus:outline-none transition-colors">
+                                    <option value="" disabled selected>בחר כמות (1-7)...</option>
+                                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="question-block">
+                        <label class="block font-medium text-slate-700"><strong>4. תקשוב ושו"ב:</strong> שליטה והפעלה של מערכות משואה/צייד וקשר רדיו מחלקתי.</label>
+                        <div class="scale-container" data-qname="q4"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part B -->
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
+                    <h3 class="text-lg font-bold text-slate-800">חלק ב': מערכים מקצועיים ויחסי גומלין</h3>
+                </div>
+                
+                <div class="p-6 space-y-10">
+                    
+                    <!-- HQ -->
+                    <div class="space-y-6">
+                        <h4 class="text-lg font-bold text-idf border-b-2 border-idf-light pb-2">מכלול מנהלה (שליטה ובקרה)</h4>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>5. ניהול תמונת מצב:</strong> יכולת המכלול לייצר, לתחזק ולשקף תמונת מצב לוגיסטית מהימנה ורציפה בזמן אמת, תוך עבודה עם עזרים תקניים.</label>
+                            <div class="scale-container" data-qname="q5"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>6. שליטה ודיווח:</strong> רמת השליטה בנהלי הדיווח התקניים, תעדוף משימות, וניהול חריגים תחת עומס פניות מהשטח.</label>
+                            <div class="scale-container" data-qname="q6"></div>
+                        </div>
+                        <div class="question-block sync-block">
+                            <label class="block font-bold text-slate-800"><strong>7. יחסי גומלין מול אג"ם:</strong> רמת הסנכרון מול מכלול המבצעים - עד כמה המכלול הלוגיסטי מבין את התוכנית האופרטיבית, משתלב ומשפיע על הנוהל הקרב?</label>
+                            <div class="scale-container" data-qname="q7"></div>
+                        </div>
+                    </div>
+
+                    <!-- Supply -->
+                    <div class="space-y-6 pt-4">
+                        <h4 class="text-lg font-bold text-idf border-b-2 border-idf-light pb-2">מערך ההספקה</h4>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>8. כשירות פלגת הספקה:</strong> מיומנות פלגת ההספקה בתכנון וביצוע שיירות לוגיסטיות וניווט לצירים לוגיסטיים.</label>
+                            <div class="scale-container" data-qname="q8"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>9. נהיגה חשוכה ומבצעית:</strong> יכולת הנהגים בביצוע נסיעות שטח מורכבות, נהיגה חשוכה (עם ובלי אמצעי ראיית לילה) תוך שמירה על בטיחות ומבצעיות.</label>
+                            <div class="scale-container" data-qname="q9"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>10. כשירות פרט:</strong> ביצוע רענוני נהיגה לנהגים ורמת השליטה המקצועית שלהם.</label>
+                            <div class="scale-container" data-qname="q10"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>11. כשירות מפקדי כיתות:</strong> יכולת הפיקוד והשליטה של מפקדי הכיתות בפלגה.</label>
+                            <div class="scale-container" data-qname="q11"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>12. תפקוד תחת איום:</strong> רמת התפקוד של מפקדי הכיתות בפלגת ההספקה בזמן מבצע לוגיסטי ותגובה לאירועים מבצעיים בדרך.</label>
+                            <div class="scale-container" data-qname="q12"></div>
+                        </div>
+                        <div class="question-block sync-block">
+                            <label class="block font-bold text-slate-800"><strong>13. סנכרון מול המכלול:</strong> עדכון ושיקוף שוטף של נתונים ומידע בפלגת ההספקה למכלול המנהלה (קבלת אישורים, עדכון חציית קווים, דיווח פערים במלאי).</label>
+                            <div class="scale-container" data-qname="q13"></div>
+                        </div>
+                    </div>
+
+                    <!-- Medical -->
+                    <div class="space-y-6 pt-4">
+                        <h4 class="text-lg font-bold text-idf border-b-2 border-idf-light pb-2">מערך הרפואה</h4>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>14. טיפול רפואי ואר"ן:</strong> רמת הכשירות המקצועית של הצוותים (רופאים/פרמדיקים/חובשים) בטיפול מציל חיים מורכב בתנאי שטח וטיפול במספר רב של נפגעים במקביל.</label>
+                            <div class="scale-container" data-qname="q14"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>15. שרשרת הפינוי:</strong> יעילות חוליות הפינוי הרכובות, מהירות ואיכות הוצאת הפצועים מהקצה הטקטי לתאג"ד ומשם לאחור, כולל חבירה לכוחות חילוץ ומסוקים.</label>
+                            <div class="scale-container" data-qname="q15"></div>
+                        </div>
+                        <div class="question-block sync-block">
+                            <label class="block font-bold text-slate-800"><strong>16. סנכרון מול המכלול:</strong> טיב העברת דוחות פצועים למכלול, תיאום פינוי מוסק/רכוב בזמן אמת, ווידוא סגירת מעגל לוגיסטית להשלמת ציוד.</label>
+                            <div class="scale-container" data-qname="q16"></div>
+                        </div>
+                    </div>
+
+                    <!-- HR -->
+                    <div class="space-y-6 pt-4">
+                        <h4 class="text-lg font-bold text-idf border-b-2 border-idf-light pb-2">מערך המשא"ן</h4>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>17. ניהול דמ"ח:</strong> יכולת ניהול רישום נוכחים, מעקב בע"ת קריטים ועדכון סטטוס פצועים וחללים.</label>
+                            <div class="scale-container" data-qname="q17"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>18. קליטת כוח אדם ומילואים:</strong> יעילות שרשרת החיול, קליטה מהירה של אנשי המילואים בחירום, הצטיידותם המהירה ושיבוצם במחלקות הרלוונטיות.</label>
+                            <div class="scale-container" data-qname="q18"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>19. טיפול בפרט ונפגעים:</strong> רמת המוכנות, הרגישות והיעילות בטיפול בפרט בתנאי שטח, וכן ניהול הקשר והתהלכים מול משפחות הנפגעים בשעת חירום.</label>
+                            <div class="scale-container" data-qname="q19"></div>
+                        </div>
+                        <div class="question-block sync-block">
+                            <label class="block font-bold text-slate-800"><strong>20. סנכרון מול המכלול:</strong> רמת השקיפות וזרימת המידע למכלול מנהלה לצורך שילוב נתוני כוח האדם בהערכת המצב הגדודית.</label>
+                            <div class="scale-container" data-qname="q20"></div>
+                        </div>
+                    </div>
+
+                    <!-- Rabbinate -->
+                    <div class="space-y-6 pt-4">
+                        <h4 class="text-lg font-bold text-idf border-b-2 border-idf-light pb-2">מערך הרבנות</h4>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>21. טיפול בחללים:</strong> השליטה המקצועית בתהליכי איסוף, זיהוי ראשוני, רישום מדויק ופינוי מכבד בהתאם לפקודות.</label>
+                            <div class="scale-container" data-qname="q21"></div>
+                        </div>
+                        <div class="question-block">
+                            <label class="block font-medium text-slate-700"><strong>22. מענה לוגיסטי-דתי:</strong> מוכנות לספק מענה שלם (כשרות, תפילות, ציוד דת) גם בתנאי לחימה רציפים.</label>
+                            <div class="scale-container" data-qname="q22"></div>
+                        </div>
+                        <div class="question-block sync-block">
+                            <label class="block font-bold text-slate-800"><strong>23. סנכרון מול המכלול:</strong> רמת התיאום מול המכלול בעת אירוע חללים, והזרמת סטטוס מהימן לצורך דיווח לרמות הממונות.</label>
+                            <div class="scale-container" data-qname="q23"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Submit Button -->
+            <div class="flex justify-center mt-8 pb-4">
+                <button type="submit" class="bg-idf hover:bg-idf-dark text-white font-bold py-4 px-12 rounded-full shadow-lg text-xl transition-transform hover:scale-105">
+                    נתח תוצאות וקבע אימון
+                </button>
+            </div>
+            
+            <!-- אזור ההודעה על שגיאות חכמות -->
+            <div id="error-message" class="text-red-800 text-center hidden mb-4 bg-red-100 p-4 rounded-lg border border-red-300 shadow-md"></div>
+
+        </form>
+
+        <!-- Results Section (Hidden initially) -->
+        <div id="resultsSection" class="hidden mt-8 bg-white rounded-xl shadow-2xl border-2 border-idf p-8 text-center animate-fade-in-up mb-12">
+            
+            <!-- Hidden spans to store brigade and battalion for share logic -->
+            <span id="resBrigade" class="hidden"></span>
+            <span id="resBattalion" class="hidden"></span>
+
+            <div class="w-20 h-20 bg-idf text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            
+            <!-- Update header to include Brigade and Battalion -->
+            <h2 class="text-2xl text-slate-600 font-bold mb-2">מודל האימון המומלץ לגדוד <span id="displayBattalion" class="text-idf"></span> (חטיבה <span id="displayBrigade" class="text-idf"></span>):</h2>
+            <div id="recommendedTraining" class="text-4xl font-extrabold text-idf mb-6"></div>
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-6 text-right max-w-2xl mx-auto">
+                <h4 class="text-lg font-bold text-slate-800 mb-2">דגש ומיקוד מרכזי לאימון:</h4>
+                <p id="trainingEmphasis" class="text-slate-700 text-lg leading-relaxed"></p>
+                
+                <div id="backgroundAlert" class="mt-4 p-3 bg-yellow-50 border-r-4 border-yellow-500 text-yellow-800 font-medium hidden">
+                    <!-- Background alerts injected here -->
+                </div>
+                
+                <div id="vehicleAlert" class="mt-4 p-3 bg-red-100 border-r-4 border-red-500 text-red-800 font-bold hidden">
+                    <!-- Vehicles alert injected here -->
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-200">
+                    <p class="text-sm text-slate-500 font-bold mb-1">פילוח ממוצעים (מתוך 5):</p>
+                    <div id="statsDetails" class="grid grid-cols-2 gap-2 text-sm text-slate-600"></div>
+                </div>
+            </div>
+
+            <!-- אזור הכפתורים המעודכן עם קטלוג האימונים -->
+            <div class="mt-10 flex flex-col items-center gap-6">
+                
+                <!-- Main action: Catalog -->
+                <a href="https://agent-69b00d76b63e323632f6a3cf--catalog146.netlify.app/" target="_blank" class="bg-idf-accent hover:bg-yellow-500 text-idf-dark px-8 py-3 rounded-full font-extrabold text-lg flex items-center gap-2 shadow-lg transition-transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    פתח קטלוג אימונים אוגדתי
+                </a>
+                
+                <!-- Secondary actions -->
+                <div class="flex flex-wrap justify-center gap-6 mt-2 border-t border-slate-200 pt-6 w-full max-w-xl">
+                    <button onclick="window.print()" class="text-idf underline hover:text-idf-dark font-medium font-bold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        הדפס דוח
+                    </button>
+                    <button onclick="shareResults(this)" class="text-idf underline hover:text-idf-dark font-medium font-bold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                        <span>שתף תוצאות</span>
+                    </button>
+                    <button onclick="location.reload()" class="text-slate-500 hover:text-slate-800 font-medium font-bold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        אבחן גדוד נוסף
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Copy to clipboard fallback handler
+        function fallbackCopyTextToClipboard(text, successCallback) {
+            var textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                var successful = document.execCommand('copy');
+                if (successful) successCallback();
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Share the app link
+        function shareApp(btnElement) {
+            const url = window.location.href;
+            const originalHtml = btnElement.innerHTML;
+            
+            if (url.startsWith('file:') || url.startsWith('blob:') || url.includes('googleusercontent.com') || url.includes('sandbox')) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'fixed top-24 left-1/2 transform -translate-x-1/2 bg-yellow-50 border-2 border-yellow-400 text-yellow-800 px-6 py-4 rounded-xl z-50 shadow-2xl text-center w-11/12 max-w-md';
+                alertDiv.innerHTML = '<div class="font-bold text-lg mb-2">🦁 שים לב, אופק!</div><p class="text-sm font-medium">המערכת כרגע רצה מקובץ מקומי, ולכן הקישור לא יעבוד למפקדים אחרים.</p><p class="text-sm mt-2">כדי לשתף כרגע, <b>שלח להם את הקובץ עצמו (כולל התמונה)</b>, או העלה אותו לשרת אוגדתי לקבלת קישור אמיתי.</p>';
+                document.body.appendChild(alertDiv);
+                
+                setTimeout(function() { 
+                    alertDiv.style.opacity = '0';
+                    alertDiv.style.transition = 'opacity 0.5s ease';
+                    setTimeout(function() { alertDiv.remove(); }, 500);
+                }, 7000);
+                
+                return;
+            }
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'שאלון אבחון לוגיסטי אוגדה 146',
+                    url: url
+                }).catch(console.error);
+            } else {
+                fallbackCopyTextToClipboard(url, function() {
+                    btnElement.innerHTML = 'הקישור הועתק!';
+                    setTimeout(function() { btnElement.innerHTML = originalHtml; }, 2000);
+                });
+            }
+        }
+
+        // Share the generated results
+        function shareResults(btnElement) {
+            const title = document.getElementById('recommendedTraining').innerText;
+            const emphasis = document.getElementById('trainingEmphasis').innerText;
+            const brigade = document.getElementById('resBrigade').innerText;
+            const battalion = document.getElementById('resBattalion').innerText;
+
+            let vehicleWarning = "";
+            const vehicleAlertBox = document.getElementById('vehicleAlert');
+            if (vehicleAlertBox && !vehicleAlertBox.classList.contains('hidden')) {
+                vehicleWarning = "\n\n" + vehicleAlertBox.innerText;
+            }
+
+            const textToShare = "תוצאות אבחון לוגיסטי גדוד " + battalion + " חטיבה " + brigade + "\n\n" +
+                                "מודל אימון מומלץ: " + title + "\n\n" +
+                                "דגש ומיקוד מרכזי לאימון:\n" + emphasis + vehicleWarning + "\n\n" +
+                                "* הופק באמצעות מערכת אבחון לוגיסטי - מרכז אימונים לוגיסטי אוגדה 146";
+            
+            const originalHtml = btnElement.innerHTML;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'תוצאות אבחון לוגיסטי 146',
+                    text: textToShare
+                }).catch(console.error);
+            } else {
+                fallbackCopyTextToClipboard(textToShare, function() {
+                    const span = btnElement.querySelector('span');
+                    if (span) {
+                        span.innerText = 'הועתק ללוח!';
+                    } else {
+                        btnElement.innerText = 'הועתק ללוח!';
+                    }
+                    setTimeout(function() { btnElement.innerHTML = originalHtml; }, 2000);
+                });
+            }
+        }
+
+        // DOM Generation without inline document.write scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            var containers = document.querySelectorAll('.scale-container');
+            for (var i = 0; i < containers.length; i++) {
+                var container = containers[i];
+                var qName = container.getAttribute('data-qname');
+                var html = '<div class="flex justify-between gap-2 mt-3" dir="ltr">';
+                for(var j = 1; j <= 5; j++) {
+                    html += '<label class="rating-label flex-1 cursor-pointer">';
+                    html += '<input type="radio" name="' + qName + '" value="' + j + '" class="hidden">';
+                    html += '<div class="bg-slate-100 border border-slate-300 rounded-lg py-3 text-center text-lg hover:bg-slate-200">' + j + '</div>';
+                    html += '</label>';
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            }
+        });
+
+        document.getElementById('assessmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const answers = {};
+            let missingItems = [];
+            let firstErrorElement = null;
+
+            // איפוס הדגשות שגיאה קודמות
+            document.querySelectorAll('.error-highlight').forEach(function(el) {
+                el.classList.remove('error-highlight', 'bg-red-50', 'border-red-400', 'border-2', 'p-3', 'rounded-lg');
+            });
+            document.querySelectorAll('input[type="number"], select').forEach(function(el) {
+                el.classList.remove('border-red-500', 'border-2');
+            });
+
+            // בדיקת שאלות רקע (מספרי יחידה)
+            const brigadeNumber = formData.get('brigade_number');
+            if (!brigadeNumber) {
+                missingItems.push('מספר חטיבה');
+                const el = document.querySelector('input[name="brigade_number"]');
+                el.classList.add('border-red-500', 'border-2');
+                if(!firstErrorElement) firstErrorElement = el;
+            }
+
+            const battalionNumber = formData.get('battalion_number');
+            if (!battalionNumber) {
+                missingItems.push('מספר גדוד');
+                const el = document.querySelector('input[name="battalion_number"]');
+                el.classList.add('border-red-500', 'border-2');
+                if(!firstErrorElement) firstErrorElement = el;
+            }
+
+            // בדיקת שאלות רקע (היסטוריה וחילופים)
+            const lastTraining = formData.get('last_training');
+            if (!lastTraining) {
+                missingItems.push('מתי התקיים אימון אחרון');
+                const el = document.querySelector('select[name="last_training"]');
+                el.classList.add('border-red-500', 'border-2');
+                if(!firstErrorElement) firstErrorElement = el;
+            }
+
+            const roleChanges = formData.get('role_changes');
+            if (!roleChanges) {
+                missingItems.push('חילופי בעלי תפקידים');
+                const el = document.getElementById('roleChangesContainer');
+                if (el) el.classList.add('error-highlight', 'bg-red-50', 'border-red-400', 'border-2', 'p-3', 'rounded-lg');
+                if(!firstErrorElement) firstErrorElement = el;
+            }
+
+            // בדיקת שאלה 3 המיוחדת (רכבים)
+            const heavyTrucks = formData.get('heavy_trucks');
+            const lightTrucks = formData.get('light_trucks');
+            
+            if(!heavyTrucks) {
+                missingItems.push('כמות רכבי משא כבד');
+                const el = document.querySelector('select[name="heavy_trucks"]');
+                el.classList.add('border-red-500', 'border-2');
+                if(!firstErrorElement) firstErrorElement = el;
+            }
+            if(!lightTrucks) {
+                missingItems.push('כמות רכבי משא');
+                const el = document.querySelector('select[name="light_trucks"]');
+                el.classList.add('border-red-500', 'border-2');
+                if(!firstErrorElement) firstErrorElement = el;
+            }
+
+            // בדיקת שאר שאלות הדירוג (מספרים 1, 2, ו- 4 עד 23)
+            for(let i=1; i<=23; i++) {
+                if (i === 3) continue; // שאלת הרכבים נבדקת בנפרד
+                
+                const val = formData.get('q' + i);
+                if(!val) { 
+                    missingItems.push('שאלה ' + i);
+                    const container = document.querySelector('[data-qname="q' + i + '"]');
+                    if (container) {
+                        const el = container.parentElement;
+                        el.classList.add('error-highlight', 'bg-red-50', 'border-red-400', 'border-2', 'p-3', 'rounded-lg');
+                        if(!firstErrorElement) firstErrorElement = el;
+                    }
+                } else {
+                    answers['q' + i] = parseInt(val);
+                }
+            }
+
+            const errorMsgEl = document.getElementById('error-message');
+            if (missingItems.length > 0) {
+                errorMsgEl.innerHTML = '<strong class="text-xl">שים לב מפקד, חסרים נתונים בסעיפים הבאים:</strong><br><span class="font-medium mt-2 block">' + missingItems.join(', ') + '</span>';
+                errorMsgEl.classList.remove('hidden');
+                
+                // גלילה חלקה לשגיאה הראשונה במסך
+                if (firstErrorElement) {
+                    firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+            errorMsgEl.classList.add('hidden');
+
+            let changedArrays = [];
+            if(roleChanges === 'yes') {
+                changedArrays = formData.getAll('changed_arrays');
+            }
+
+            // שמירת נתונים לתצוגה ולשיתוף
+            document.getElementById('displayBrigade').innerText = brigadeNumber;
+            document.getElementById('displayBattalion').innerText = battalionNumber;
+            document.getElementById('resBrigade').innerText = brigadeNumber;
+            document.getElementById('resBattalion').innerText = battalionNumber;
+
+            const avg = function(arr) { return arr.reduce(function(a, b) { return a + b; }, 0) / arr.length; };
+            
+            const basicAvg = avg([answers.q1, answers.q2, answers.q4]);
+            const hqAvg = avg([answers.q5, answers.q6, answers.q7]); 
+            const supplyAvg = avg([answers.q8, answers.q9, answers.q10, answers.q11, answers.q12, answers.q13]); 
+            const medAvg = avg([answers.q14, answers.q15, answers.q16]); 
+            const hrAvg = avg([answers.q17, answers.q18, answers.q19, answers.q20]); 
+            const rabAvg = avg([answers.q21, answers.q22, answers.q23]); 
+            
+            const allValues = Object.values(answers);
+            const overallAvg = avg(allValues);
+
+            let recommendationTitle = '';
+            let recommendationEmphasis = '';
+            const threshold = 3.5;
+
+            let weakArraysForFocus = [];
+            if (hqAvg < threshold) weakArraysForFocus.push('מכלול מנהלה');
+            if (supplyAvg < threshold) weakArraysForFocus.push('הספקה');
+            if (medAvg < threshold) weakArraysForFocus.push('רפואה');
+            if (hrAvg < threshold) weakArraysForFocus.push('משא"ן');
+            if (rabAvg < threshold) weakArraysForFocus.push('רבנות');
+            
+            let focusText = '';
+            if (weakArraysForFocus.length > 0) {
+                focusText = ' מחלקות שנדרשות במיקוד באימון המלא: ' + weakArraysForFocus.join(", ") + '.';
+            }
+
+            // אלגוריתם לבחירת אימון מרכזי
+            if (lastTraining === 'over_year' && roleChanges === 'yes') {
+                recommendationTitle = 'אימון פלס"ם מלא';
+                recommendationEmphasis = 'חובה מערכתית: עברה מעל שנה מההפעלה האחרונה ובנוסף התבצעו חילופי תפקידים. מצב זה מחייב אימון פלס"ם מלא (יישור קו רוחבי) ללא התחשבות בדירוג המקצועי הנוכחי.' + focusText;
+            }
+            else if (overallAvg < threshold) {
+                recommendationTitle = 'אימון פלס"ם מלא';
+                recommendationEmphasis = 'הציון הכללי של הגדוד מחייב יישור קו רוחבי. נדרש תרגול מעשי בשטח, תנועה פלוגתית משולבת וניהול הפעולה הלוגיסטית מקצה לקצה.' + focusText;
+            } 
+            else if (basicAvg < threshold && hrAvg < threshold) {
+                recommendationTitle = 'אימון ממוקד: נוהל גיוס חירום (נג"ח)';
+                recommendationEmphasis = 'הגדוד מציג פערים בסיסיים באיוש, כשירות וניהול מצבה. יש למקד אימון בשרשרת החיול, קליטת המילואים, שילובם במחלקות והשלמות ציוד מהירות.';
+            }
+            else if (answers.q4 <= 2 || answers.q5 <= 2) {
+                recommendationTitle = 'אימון ממוקד: שו"ב וניהול עזרים';
+                recommendationEmphasis = 'זוהתה חולשה משמעותית בשליטה במערכות תקשוב ובניית תמונת מצב. נדרש אימון חמ"ל טכנולוגי (יבש) לתרגול דיווחי מערכת, ניהול משואה ועבודה עם עזרי אג"ם.';
+            }
+            else if (answers.q12 < threshold || answers.q14 < threshold) {
+                recommendationTitle = 'אימון ממוקד: ניהול אירוע תחת לחץ';
+                recommendationEmphasis = 'יכולת המחלקות טובה, אך יש קושי בתפקוד בעת משבר. חובה לתרגל סימולציות של אר"ן או התקלות שיירה, לבחינת מהירות התגובה והשליטה בשטח.';
+            }
+            else if (hqAvg < threshold && supplyAvg >= threshold && medAvg >= threshold) {
+                recommendationTitle = 'אימון מכלול מנהלה וסנכרון אג"ם';
+                recommendationEmphasis = 'המחלקות המקצועיות בשטח חזקות, אך חסר סנכרון וניהול מטכ"לי יעיל. דגש על סימולציות חמ"ל, שיקוף תמונת מצב, קבלת החלטות סמ"ג ושילוב בנוהל הקרב של מכלול המבצעים.';
+            }
+            else if (supplyAvg < threshold || medAvg < threshold || hrAvg < threshold || rabAvg < threshold) {
+                let weakArrays = [];
+                if (supplyAvg < threshold) weakArrays.push('הספקה');
+                if (medAvg < threshold) weakArrays.push('רפואה');
+                if (hrAvg < threshold) weakArrays.push('משא"ן');
+                if (rabAvg < threshold) weakArrays.push('רבנות');
+                
+                recommendationTitle = 'אימון ממוקד לפלגות: ' + weakArrays.join(", ");
+                recommendationEmphasis = 'נדרש אימון ממוקד לפלגות הבאות: ' + weakArrays.join(", ") + '.';
+            }
+            else {
+                recommendationTitle = 'אימון נוהל קרב';
+                recommendationEmphasis = 'נדרש אימון נוהל קרב.';
+            }
+
+            // תוספת חובה לאלגוריתם: אימון פלגה למערכים שהתחלפו
+            if (roleChanges === 'yes' && changedArrays.length > 0) {
+                recommendationEmphasis += '<br><br><strong class="text-red-600">שים לב</strong> - יש לבצע אימון פלגה ב' + changedArrays.join(" וב") + ' בנוסף לאימון הנבחר, לאור חילוף בעל תפקיד.';
+            }
+
+            document.getElementById('recommendedTraining').innerText = recommendationTitle;
+            document.getElementById('trainingEmphasis').innerHTML = recommendationEmphasis; 
+            
+            const statsHtml = 
+                '<div><strong>ממוצע כללי:</strong> ' + overallAvg.toFixed(2) + '</div>' +
+                '<div><strong>כשירות בסיסית:</strong> ' + basicAvg.toFixed(2) + '</div>' +
+                '<div><strong>מכלול מנהלה:</strong> ' + hqAvg.toFixed(2) + '</div>' +
+                '<div><strong>הספקה:</strong> ' + supplyAvg.toFixed(2) + '</div>' +
+                '<div><strong>רפואה:</strong> ' + medAvg.toFixed(2) + '</div>' +
+                '<div><strong>משא"ן:</strong> ' + hrAvg.toFixed(2) + '</div>' +
+                '<div><strong>רבנות:</strong> ' + rabAvg.toFixed(2) + '</div>';
+            
+            document.getElementById('statsDetails').innerHTML = statsHtml;
+
+            // התראת רקע על חילופי תפקידים
+            const alertBox = document.getElementById('backgroundAlert');
+            if (lastTraining === 'over_year') {
+                alertBox.innerHTML = '<strong>שים/י לב:</strong> עברה מעל שנה מההפעלה האחרונה.';
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+
+            // התראת כמות רכבים מותאמת
+            const vehicleAlertBox = document.getElementById('vehicleAlert');
+            const totalVehicles = parseInt(heavyTrucks) + parseInt(lightTrucks);
+            if (totalVehicles < 5 || parseInt(heavyTrucks) <= 3) {
+                vehicleAlertBox.innerHTML = 'כמות הרכבים קטנה, מומלץ להגדיל את כמות הרכבים על מנת ליצר אימון אפקטיבי.';
+                vehicleAlertBox.classList.remove('hidden');
+            } else {
+                vehicleAlertBox.classList.add('hidden');
+            }
+            
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.classList.remove('hidden');
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
